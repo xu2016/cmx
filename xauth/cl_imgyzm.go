@@ -100,7 +100,7 @@ func GetBase64ImgYzm(len, width, height int) (yzm, base64ImgStr string) {
 	yzm, capC := GenerateCaptcha(6, xcm.NSUSTR, configC)
 	//以base64编码
 	base64ImgStr = CaptchaWriteToBase64Encoding(capC)
-	GYzm.Add(yzm, "")
+	GCA.Gyzm.Add(yzm, "")
 	return
 }
 

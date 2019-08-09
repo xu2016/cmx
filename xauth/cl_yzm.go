@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-//GYzm 全局验证码管理器
-var GYzm *Cyzm
-
 //Cyzm 验证码管理器
 type Cyzm struct {
 	lock        sync.Mutex           // protects session
@@ -36,9 +33,9 @@ func (yzmm *Cyzm) GC() {
 
 //Add 添加验证码md5(yzm+uid)
 func (yzmm *Cyzm) Add(yzm, uid string) {
-	zsstr := xcm.GetMD5(yzm + uid)
 	yzmm.lock.Lock()
 	defer yzmm.lock.Unlock()
+	zsstr := xcm.GetMD5(yzm + uid)
 	yzmm.yzm[zsstr] = time.Now()
 	return
 }
