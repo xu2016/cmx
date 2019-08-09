@@ -23,8 +23,8 @@ type session struct {
 	city         string    //地市
 }
 
-//NewSessionManager 参加一个Session管理器
-func NewSessionManager(maxlifetime int64) *SManager {
+//NewSManager 参加一个Session管理器
+func NewSManager(maxlifetime int64) *SManager {
 	sid := make(map[string]session, 0)
 	return &SManager{sid: sid, maxlifetime: maxlifetime}
 }

@@ -3,7 +3,6 @@ package xauth
 import (
 	"cmx/xcm"
 	"errors"
-	"strings"
 	"time"
 )
 
@@ -18,11 +17,12 @@ var keyStr = [62]string{
 
 //CUniKey 唯一key管理器
 type CUniKey struct {
-	uks map[string]chan UniKey
+	uks chan uniKey
+	cnt int
 }
 
 //UniKey 唯一key定义
-type UniKey struct {
+type uniKey struct {
 	RN      int64
 	USecond int64
 	Cnt     int
@@ -31,25 +31,18 @@ type UniKey struct {
 /*NewUniKey 创建一个Session管理器
 uknames:每个key键表示一个UniKey生成器，value表示生成器的生成的随机数的位数。
 */
-func NewUniKey(uknames map[string]int) *CUniKey {
-	cuk := &CUniKey{uks: make(map[string]chan UniKey)}
-	for k := range uknames {
-		cuk.uks[k] = make(chan UniKey)
-	}
-	for k, v := range uknames {
-		go cuk.runUniKey(k, v)
-	}
-	return cuk
+func NewUniKey(cnt int) *CUniKey {
+	return &CUniKey{uks: make(chan uniKey), cnt: cnt}
 }
 
 /*runUniKey 新建一个UniKey生成器,每个生成器都需要使用go新建一个协程
 cnt:表示生成的随机字符的位数，通过位数生成RN的最大的数
 */
-func (cuk *CUniKey) runUniKey(ukname string, cnt int) {
+func (cuk *CUniKey) runUniKey() {
 	sunix := time.Now().Unix()
 	max := int64(0)
 	x := int64(1)
-	for i := 0; i < cnt; i++ {
+	for i := 0; i < cuk.cnt; i++ {
 		max += x * 61
 		x *= 62
 	}
@@ -59,7 +52,7 @@ func (cuk *CUniKey) runUniKey(ukname string, cnt int) {
 			i = 0
 		}
 		if i <= max {
-			cuk.uks[ukname] <- UniKey{RN: i, USecond: sunix, Cnt: cnt}
+			cuk.uks <- uniKey{RN: i, USecond: sunix}
 		}
 	}
 }
@@ -74,21 +67,21 @@ key的总长度:len(idtype)+7+len(max)
 5位：[0,61+61*62+61*62*62+61*62*62*62+61*62*62*62*62]=[0,916132831]
 ...
 */
-func (cuk *CUniKey) GetUniKey(ukname, idtype string) (id string, err error) {
-	rnx, ok := <-cuk.uks[ukname]
+func (cuk *CUniKey) GetUniKey(idHeader string) (id string, err error) {
+	rnx, ok := <-cuk.uks
 	if !ok {
 		err = errors.New("get unikey error")
 		return
 	}
 	rstr := ""
-	for i := 0; i < rnx.Cnt; i++ {
+	for i := 0; i < cuk.cnt; i++ {
 		x := rnx.RN % 62
 		rstr = keyStr[x] + rstr
 		rnx.RN /= 62
 	}
 	tm := time.Unix(rnx.USecond, 0)
 	yy, mm, dd, hh, ii, ss := xcm.GetTime(tm)
-	id = strings.ToUpper(idtype) + keyStr[yy/62] + keyStr[yy%62] + keyStr[mm] + keyStr[dd] +
+	id = idHeader + keyStr[yy/62] + keyStr[yy%62] + keyStr[mm] + keyStr[dd] +
 		keyStr[hh] + keyStr[ii] + keyStr[ss] + rstr
 	return
 }

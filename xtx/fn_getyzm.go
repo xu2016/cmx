@@ -61,7 +61,7 @@ func SendTxYzm(phone, sdkappid, appkey, params, sign, tplid, random string) (err
 		"time": ` + tm + `,
 		"tpl_id": ` + tplid + `
 	}`)
-	xauth.GYzm.SetYzm(random, phone)
+	xauth.GCA.Gyzm.Add(random, phone)
 	url := `https://yun.tim.qq.com/v5/tlssmssvr/sendsms?sdkappid=` + sdkappid + `&random=` + random
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")

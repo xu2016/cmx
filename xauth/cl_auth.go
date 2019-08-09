@@ -3,7 +3,6 @@ package xauth
 import (
 	"cmx/xcm"
 	"cmx/xwb"
-	"errors"
 	"net/http"
 )
 
@@ -11,42 +10,39 @@ import (
 var GCA *CAuth
 
 //NewCAuth 创建一个全局权限设置对象
-func NewCAuth(dbstr, dbtype string, uks, sessionTime map[string]int, cookiesName map[string]string) (ca *CAuth, err error) {
-	ca = &CAuth{pcCookieName: cookiesName["pc"], wxCookieName: cookiesName["wx"], h5CookieName: cookiesName["h5"]}
-	ca.Guk = NewUniKey(uks)
-	if v, ok := sessionTime["pc"]; ok {
-		ca.Gpcsm = NewSessionManager(int64(v))
-	} else {
-		err = errors.New(`sessionTime["pc"] not defined`)
-	}
-	ca.Gcrs = NewCRoleSer(dbstr, dbtype)
-	return
+func NewCAuth(dbstr, dbtype string, cnt int, pcTime, wxTime, h5Time int64,
+	pcCName, wxCName, h5CName string) *CAuth {
+	return &CAuth{pcCName: pcCName, wxCName: wxCName, h5CName: h5CName, dbstr: dbstr, dbtype: dbtype,
+		Gsm: NewSManager(pcTime), Gyzm: NewCyzm(3600), Guk: NewUniKey(3), Gcrs: NewCRoleSer(dbstr, dbtype)}
 }
 
 //CAuth 权限设置类
 type CAuth struct {
-	pcCookieName string
-	wxCookieName string
-	h5CookieName string
-	Gpcsm        *SManager //Gpcsm 全局PC端Session管理器
-	Gyzm         *Cyzm     //Gyzm 全局验证码管理器
-	Guk          *CUniKey  //Guk 全局唯一key管理器
-	Gcrs         *CRoleSer //Gcrs 全局角色服务对应关系管理对象
+	pcCName string
+	wxCName string
+	h5CName string
+	dbstr   string
+	dbtype  string
+	Gsm     *SManager //Gpcsm 全局PC端Session管理器
+	Gyzm    *Cyzm     //Gyzm 全局验证码管理器
+	Guk     *CUniKey  //Guk 全局唯一key管理器
+	Gcrs    *CRoleSer //Gcrs 全局角色服务对应关系管理对象
 }
 
 //RunCAuth 运行需要一直运行的协程
 func (ca *CAuth) RunCAuth() {
 	ca.Gcrs.UpdateSerRole()
-	go ca.Gpcsm.GC()
+	go ca.Gsm.GC()
 	go ca.Gyzm.GC()
+	go ca.Guk.runUniKey()
 }
 
 //IsLogin 判断是否登陆且有访问权限
 func (ca *CAuth) IsLogin(r *http.Request, tp string) (sid string, b bool) {
 	switch tp {
 	case "pc":
-		sid = GetCookie(ca.pcCookieName, r)
-		roles := ca.Gpcsm.GetUserRoles(sid)
+		sid = GetCookie(ca.pcCName, r)
+		roles := ca.Gsm.GetUserRoles(sid)
 		serKey := xcm.GetMD5(xwb.GetURL(r) + r.FormValue("ctype"))
 		b = ca.Gcrs.IsAllow(serKey, roles)
 	case "wx":
@@ -60,15 +56,15 @@ func (ca *CAuth) IsLogin(r *http.Request, tp string) (sid string, b bool) {
 }
 
 //AddLogin 添加登陆信息
-func (ca *CAuth) AddLogin(w http.ResponseWriter, tp, cookieName, userid, phone, city string,
+func (ca *CAuth) AddLogin(w http.ResponseWriter, tp, userid, phone, city string,
 	rid []string) (sid string, err error) {
 	switch tp {
 	case "pc":
-		sid, err = ca.Gpcsm.AddSession(userid, phone, city, rid)
+		sid, err = ca.Gsm.AddSession(userid, phone, city, rid)
 		if err != nil {
 			return
 		}
-		AddCookie(cookieName, sid, w)
+		AddCookie(ca.pcCName, sid, w)
 	case "wx":
 		return
 	case "h5":
@@ -78,12 +74,12 @@ func (ca *CAuth) AddLogin(w http.ResponseWriter, tp, cookieName, userid, phone, 
 }
 
 //DelLogin 注销登陆信息
-func (ca *CAuth) DelLogin(r *http.Request, w http.ResponseWriter, tp, cookieName string) {
+func (ca *CAuth) DelLogin(r *http.Request, w http.ResponseWriter, tp string) {
 	switch tp {
 	case "pc":
-		sid := GetCookie(cookieName, r)
-		ca.Gpcsm.DelSession(sid)
-		DelCookie(cookieName, sid, w)
+		sid := GetCookie(ca.pcCName, r)
+		ca.Gsm.DelSession(sid)
+		DelCookie(ca.pcCName, sid, w)
 	case "wx":
 		return
 	case "h5":
