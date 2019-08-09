@@ -42,7 +42,15 @@ func (ca *CAuth) IsLogin(r *http.Request, tp string) (sid string, b bool) {
 	switch tp {
 	case "pc":
 		sid = GetCookie(ca.pcCName, r)
+		if sid == "" {
+			b = false
+			return
+		}
 		roles := ca.Gsm.GetUserRoles(sid)
+		if len(roles) == 0 {
+			b = false
+			return
+		}
 		serKey := xcm.GetMD5(xwb.GetURL(r) + r.FormValue("ctype"))
 		b = ca.Gcrs.IsAllow(serKey, roles)
 	case "wx":
