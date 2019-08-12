@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -45,6 +46,11 @@ type YzmJkInfo struct {
 **random:随机验证码，可以为空字符串。
  */
 func SendTxYzm(phone, sdkappid, appkey, params, sign, tplid, random string) (err error) {
+	rstr, err := regexp.Compile(`^(13|14|15|16|17|18|19)[0-9]{9}$`)
+	if err != nil || !rstr.MatchString(phone) {
+		err = errors.New("手机号码不正确")
+		return
+	}
 	tm := strconv.FormatInt(time.Now().Unix(), 10)
 	str := `appkey=` + appkey + `&random=` + random + `&time=` + tm + `&mobile=` + phone
 	sig := xcm.GetSHA256(str)
