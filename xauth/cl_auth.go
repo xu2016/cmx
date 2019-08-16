@@ -27,6 +27,7 @@ type CAuth struct {
 	Gyzm    *Cyzm     //Gyzm 全局验证码管理器
 	Guk     *CUniKey  //Guk 全局唯一key管理器
 	Gcrs    *CRoleSer //Gcrs 全局角色服务对应关系管理对象
+	//Gctx    *xtx.CXtx //Gctx 全局腾讯操作接口对象
 }
 
 //RunCAuth 运行需要一直运行的协程
