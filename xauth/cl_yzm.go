@@ -54,3 +54,13 @@ func (yzmm *Cyzm) Query(yzm, uid string) bool {
 	}
 	return false
 }
+
+//Del 删除验证码
+func (yzmm *Cyzm) Del(yzm, uid string) {
+	yzmm.lock.Lock()
+	defer yzmm.lock.Unlock()
+	yzmid := xcm.GetMD5(yzm + uid)
+	if _, ok := yzmm.yzm[yzmid]; ok {
+		delete(yzmm.yzm, yzmid)
+	}
+}
