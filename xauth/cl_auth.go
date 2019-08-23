@@ -1,20 +1,10 @@
 package xauth
 
 import (
-	"cmx/xcm"
-	"cmx/xwb"
+	"cmx/xca"
+	"cmx/xtx"
 	"net/http"
 )
-
-//GCA 全局权限设置对象
-var GCA *CAuth
-
-//NewCAuth 创建一个全局权限设置对象
-func NewCAuth(dbstr, dbtype string, cnt int, pcTime, wxTime, h5Time int64,
-	pcCName, wxCName, h5CName string) *CAuth {
-	return &CAuth{pcCName: pcCName, wxCName: wxCName, h5CName: h5CName, dbstr: dbstr, dbtype: dbtype,
-		Gsm: NewSManager(pcTime), Gyzm: NewCyzm(3600), Guk: NewUniKey(3), Gcrs: NewCRoleSer(dbstr, dbtype)}
-}
 
 //CAuth 权限设置类
 type CAuth struct {
@@ -23,45 +13,20 @@ type CAuth struct {
 	h5CName string
 	dbstr   string
 	dbtype  string
-	Gsm     *SManager //Gpcsm 全局PC端Session管理器
-	Gyzm    *Cyzm     //Gyzm 全局验证码管理器
-	Guk     *CUniKey  //Guk 全局唯一key管理器
-	Gcrs    *CRoleSer //Gcrs 全局角色服务对应关系管理对象
-	//Gctx    *xtx.CXtx //Gctx 全局腾讯操作接口对象
+	Gsm     *xca.SManager  //Gpcsm 全局PC端Session管理器
+	Gyzm    *xca.CyzmCache //Gyzm 全局验证码管理器
+	Guk     *xca.CUniKey   //Guk 全局唯一key管理器
+	Gcrs    *xca.CRoleSer  //Gcrs 全局角色服务对应关系管理对象
+	Gctx    *xtx.CXtx      //Gctx 全局腾讯操作接口对象
 }
 
 //RunCAuth 运行需要一直运行的协程
 func (ca *CAuth) RunCAuth() {
 	ca.Gcrs.UpdateSerRole()
+	ca.Gctx.UpdateAccessToken()
 	go ca.Gsm.GC()
 	go ca.Gyzm.GC()
-	go ca.Guk.runUniKey()
-}
-
-//IsLogin 判断是否登陆且有访问权限
-func (ca *CAuth) IsLogin(r *http.Request, tp string) (sid string, b bool) {
-	switch tp {
-	case "pc":
-		sid = GetCookie(ca.pcCName, r)
-		if sid == "" {
-			b = false
-			return
-		}
-		roles := ca.Gsm.GetUserRoles(sid)
-		if len(roles) == 0 {
-			b = false
-			return
-		}
-		serKey := xcm.GetMD5(xwb.GetURL(r) + r.FormValue("ctype"))
-		b = ca.Gcrs.IsAllow(serKey, roles)
-	case "wx":
-		b = true
-		return
-	case "h5":
-		b = true
-		return
-	}
-	return
+	go ca.Guk.RunUniKey()
 }
 
 //AddLogin 添加登陆信息
