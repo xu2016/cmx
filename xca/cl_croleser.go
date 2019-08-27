@@ -39,8 +39,6 @@ func (cr *CRoleSer) Query(r *http.Request) (roles []string, ok bool) {
 
 //UpdateSerRole 更新角色服务对应关系
 func (cr *CRoleSer) UpdateSerRole() {
-	cr.lock.Lock()
-	defer cr.lock.Unlock()
 	xdb := xsql.NewSQL(cr.dbtype, cr.dbstr, cr.dbcommit)
 	tm := xcm.GetNowTimeInt()
 	qstr := `select nvl(roleid,'0'),nvl(serid,'0') from roleser_tbl where state=0 and endtime>=:1`
@@ -54,6 +52,8 @@ func (cr *CRoleSer) UpdateSerRole() {
 	if len(gdata) == 0 {
 		return
 	}
+	cr.lock.Lock()
+	defer cr.lock.Unlock()
 	cr.crss = make(map[string][]string)
 	for _, v := range gdata {
 		serid := v["SERID"].(string)
