@@ -1,8 +1,8 @@
 package xwb
 
 import (
+	"compress/gzip"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -47,13 +47,20 @@ func GetStaticFile(w http.ResponseWriter, r *http.Request, rootpath string) {
 	pathStr := strings.Split(path, ".")
 	v, ok := filetype[pathStr[len(pathStr)-1]]
 	if !ok {
+		w.Write([]byte(`<h1>页面正在更新。。。。。</h1>`))
 		return
 	}
 	file, err := ioutil.ReadFile(rootpath + path)
 	if err != nil {
-		log.Println(err)
+		w.Write([]byte(`<h1>页面正在更新。。。。。</h1>`))
 		return
 	}
 	w.Header().Set(`Content-type`, v)
-	w.Write(file)
+	//开启gzip压缩
+	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Set("Accept-Encoding", "gzip")
+	gzw := gzip.NewWriter(w)
+	//w.Write(file)
+	defer gzw.Close()
+	gzw.Write(file)
 }
