@@ -25,6 +25,7 @@ https://www.runoob.com/http/http-content-type.html
 var filetype = map[string]string{
 	`css`:  `text/css`,
 	`js`:   `text/javascript`,
+	`txt`:  `text/plain`,
 	`png`:  `image/png`,
 	`jpg`:  `image/jpeg`,
 	`jpeg`: `image/jpeg`,
