@@ -3,17 +3,24 @@ package xwb
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"net/http"
 )
 
-//UnJSONForm 将浏览器或客户端返回过来的JSON数据解析到val中
-func UnJSONForm(r *http.Request, val interface{}) error {
-	decoder := json.NewDecoder(r.Body)
-	return decoder.Decode(&val)
-}
+//UnForm 将浏览器或客户端返回过来的JSON或xml数据解析到val中
+func UnForm(r *http.Request, val interface{}, tp string) error {
+	if r.Body == nil {
+		return errors.New(`request body is empty`)
+	}
+	var err error
+	if tp == `json` {
+		err = json.NewDecoder(r.Body).Decode(&val)
+	} else if tp == `xml` {
+		err = xml.NewDecoder(r.Body).Decode(&val)
+	}
+	if err != nil {
 
-//UnXMLForm 将浏览器或客户端返回过来的xml数据解析到val中
-func UnXMLForm(r *http.Request, val interface{}) error {
-	decoder := xml.NewDecoder(r.Body)
-	return decoder.Decode(&val)
+		return err
+	}
+	return nil
 }
