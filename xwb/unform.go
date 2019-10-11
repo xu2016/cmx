@@ -19,7 +19,6 @@ func UnForm(r *http.Request, val interface{}, tp string) error {
 		err = xml.NewDecoder(r.Body).Decode(&val)
 	}
 	if err != nil {
-
 		return err
 	}
 	return nil
