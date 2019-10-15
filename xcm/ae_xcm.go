@@ -17,6 +17,7 @@ const (
 	nsastr  = "kl0mnop9qrwxy7zabs5tuvgh8ijcdefK6LMNOP1QRWX3YZABS4TUVGHI2JCDEF"
 	codestr = "0123456789klmnopqrwxyzabstuvghijcdefKLMNOPQRWXYZABSTUVGHIJCDEF"
 	keystr  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	yzmstr  = "3456789ABCDEFGHJKMNPQRSTUVWXY"
 )
 
 //设置生成字符串的格式
@@ -29,6 +30,7 @@ const (
 	NSUSTR        //数字和大写字母字符串
 	NSASTR        //数字大写和小写字母字符串
 	KEYSTR        //数字大写和小写字母字符串(有序)
+	YZMSTR        //数字大写和小写字母字符串(有序),去掉0,1,i,l,O,2,Z
 )
 
 var num = map[string]int{"0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9}

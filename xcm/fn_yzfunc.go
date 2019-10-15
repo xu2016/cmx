@@ -1,7 +1,6 @@
 package xcm
 
 import (
-	"os"
 	"regexp"
 	"strconv"
 )
@@ -22,16 +21,4 @@ func IsAlphaOrNum(str string, min, max int) bool {
 		return false
 	}
 	return rstr.MatchString(str)
-}
-
-//PathExists 判断路径是否存在
-func PathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
 }

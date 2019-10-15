@@ -63,6 +63,8 @@ func GetRandomString(slen int64, stp int) string {
 		mstr = nsustr
 	case KEYSTR:
 		mstr = keystr
+	case YZMSTR:
+		mstr = yzmstr
 	default:
 		mstr = nsastr
 	}
