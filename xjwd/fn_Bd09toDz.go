@@ -2,9 +2,10 @@ package xjwd
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"strconv"
 )
 
 /*
@@ -50,28 +51,31 @@ type bd09toaddressJSON struct {
 	Result zb2dzResultJSON `json:"result"`
 }
 type zb2dzResultJSON struct {
-	Formatted_address   string `json:"formatted_address"`
-	Sematic_description string `json:"sematic_description"`
+	FormattedAddress   string `json:"formatted_address"`
+	SematicDescription string `json:"sematic_description"`
 }
 
 //Bd09toDz 把BD09ll坐标系转换成地址
 //url=http://api.map.baidu.com/geocoder/v2/?location=22.513980293547004,113.4318358709309&output=json&pois=0&ak=FgDPj4Ey2493stHqR6Ns2SiLCwD8VPqT
-func Bd09toDz(url string, lng, lat float64, key string) (Formatted_address, sematic_description string, err error) {
+func Bd09toDz(lng, lat float64, key string) (FormattedAddress, sematicDescription string, err error) {
 	var bd bd09toaddressJSON
 	bd.Status = 1
-	resp, err := http.Get(url + "?location=" + strconv.FormatFloat(lat, 'f', -1, 64) + "," + strconv.FormatFloat(lng, 'f', -1, 64) + "&output=json&pois=0&ak=" + key)
+	url := fmt.Sprintf(`http://api.map.baidu.com/reverse_geocoding/v3/?ak=%s&output=json&location=%.8f,%.8f`, key, lat, lng)
+	log.Println(url)
+	resp, err := http.Get(url)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+
 	if err != nil {
 		return
 	}
 	err = json.Unmarshal([]byte(body), &bd)
 	if bd.Status == 0 {
-		Formatted_address = bd.Result.Formatted_address
-		sematic_description = bd.Result.Sematic_description
+		FormattedAddress = bd.Result.FormattedAddress
+		sematicDescription = bd.Result.SematicDescription
 		err = nil
 	}
 	return
